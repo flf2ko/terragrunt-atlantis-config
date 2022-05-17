@@ -135,7 +135,10 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 		// return nils to indicate we should skip this project
 		isParent, includes, err := parseModule(path, terragruntOptions)
 		if err != nil {
-			getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+			// getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+			if path == "/Users/flf2ko/go/src/gitlab.com/cloud-native/terragrunt/m800-prod/hongkong/prod-main-1/lb/cx-services/terragrunt.hcl" {
+				log.Errorf("getDependenciesCache set 1 error: %+v", err)
+			}
 			return nil, err
 		}
 		if isParent && ignoreParentTerragrunt {
@@ -146,7 +149,10 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 		dependencies := []string{}
 		if len(includes) > 0 {
 			for _, includeDep := range includes {
-				getDependenciesCache.set(includeDep.Path, getDependenciesOutput{nil, err})
+				// getDependenciesCache.set(includeDep.Path, getDependenciesOutput{nil, err})
+				if err != nil && (includeDep.Path == "/Users/flf2ko/go/src/gitlab.com/cloud-native/terragrunt/m800-prod/hongkong/prod-main-1/lb/cx-services/terragrunt.hcl") {
+					log.Errorf("getDependenciesCache set 1.5 path: %s, error: %+v", path, err)
+				}
 				dependencies = append(dependencies, includeDep.Path)
 			}
 		}
@@ -159,14 +165,17 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 		}
 		parsedConfig, err := config.PartialParseConfigFile(path, terragruntOptions, nil, decodeTypes)
 		if err != nil {
-			getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+			// getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+			if path == "/Users/flf2ko/go/src/gitlab.com/cloud-native/terragrunt/m800-prod/hongkong/prod-main-1/lb/cx-services/terragrunt.hcl" {
+				log.Errorf("getDependenciesCache set 2 error: %+v", err)
+			}
 			return nil, err
 		}
 
 		// Parse out locals
 		locals, err := parseLocals(path, terragruntOptions, nil)
 		if err != nil {
-			getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+			// getDependenciesCache.set(path, getDependenciesOutput{nil, err})
 			return nil, err
 		}
 
@@ -274,7 +283,10 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 				if !filepath.IsAbs(childDep) {
 					childDepAbsPath, err = filepath.Abs(filepath.Join(depPath, "..", childDep))
 					if err != nil {
-						getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+						// getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+						if path == "/Users/flf2ko/go/src/gitlab.com/cloud-native/terragrunt/m800-prod/hongkong/prod-main-1/lb/cx-services/terragrunt.hcl" {
+							log.Errorf("getDependenciesCache set 4 error: %+v", err)
+						}
 						return nil, err
 					}
 				}
@@ -306,7 +318,7 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 			cascadedDeps = append(cascadedDeps, ls...)
 		}
 
-		getDependenciesCache.set(path, getDependenciesOutput{cascadedDeps, err})
+		// getDependenciesCache.set(path, getDependenciesOutput{cascadedDeps, err})
 		return cascadedDeps, nil
 	})
 
@@ -736,6 +748,7 @@ func main(cmd *cobra.Command, args []string) error {
 					defer sem.Release(1)
 					project, err := createProject(terragruntPath)
 					if err != nil {
+						log.Errorf("Error when create project for %s: %s", terragruntPath, err)
 						return err
 					}
 					// if project and err are nil then skip this project

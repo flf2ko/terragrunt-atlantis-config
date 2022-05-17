@@ -1,4 +1,4 @@
-VERSION=1.14.2
+VERSION=1.14.2-flf2ko-no-cache
 PATH_BUILD=build/
 FILE_COMMAND=terragrunt-atlantis-config
 FILE_ARCH=darwin_amd64
@@ -6,7 +6,7 @@ S3_BUCKET_NAME=cloudfront-origin-homebrew-tap-transcend-io
 PROFILE=transcend-prod
 
 # Determine the arch/os combos we're building for
-XC_ARCH=amd64 arm
+XC_ARCH=amd64 arm64
 XC_OS=linux darwin windows
 
 .PHONY: clean
