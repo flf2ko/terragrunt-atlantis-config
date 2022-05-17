@@ -1,4 +1,4 @@
-VERSION=1.14.2
+VERSION=1.14.2-flf2ko
 PATH_BUILD=build/
 FILE_COMMAND=terragrunt-atlantis-config
 FILE_ARCH=darwin_amd64
@@ -18,7 +18,7 @@ clean:
 build: clean
 	CGO_ENABLED=0 \
 	goxc \
-    -bc="darwin,amd64" \
+    -bc="darwin,arm64" \
     -pv=$(VERSION) \
     -d=$(PATH_BUILD) \
     -build-ldflags "-X main.VERSION=$(VERSION)"

@@ -5,6 +5,8 @@ package cmd
 // parses the `locals` blocks and evaluates their contents.
 
 import (
+	"fmt"
+
 	"github.com/gruntwork-io/terragrunt/config"
 	"github.com/gruntwork-io/terragrunt/errors"
 	"github.com/gruntwork-io/terragrunt/options"
@@ -102,6 +104,7 @@ func mergeResolvedLocals(parent ResolvedLocals, child ResolvedLocals) ResolvedLo
 func parseLocals(path string, terragruntOptions *options.TerragruntOptions, includeFromChild *config.IncludeConfig) (ResolvedLocals, error) {
 	configString, err := util.ReadFileAsString(path)
 	if err != nil {
+		err = fmt.Errorf("ReadFileAsString: %+w", err)
 		return ResolvedLocals{}, err
 	}
 
@@ -109,12 +112,14 @@ func parseLocals(path string, terragruntOptions *options.TerragruntOptions, incl
 	parser := hclparse.NewParser()
 	file, err := parseHcl(parser, configString, path)
 	if err != nil {
+		err = fmt.Errorf("parseHcl: %+w", err)
 		return ResolvedLocals{}, err
 	}
 
 	// Decode just the Base blocks. See the function docs for DecodeBaseBlocks for more info on what base blocks are.
 	localsAsCty, trackInclude, err := config.DecodeBaseBlocks(terragruntOptions, parser, file, path, includeFromChild, nil)
 	if err != nil {
+		err = fmt.Errorf("DecodeBaseBlocks: %+w", err)
 		return ResolvedLocals{}, err
 	}
 

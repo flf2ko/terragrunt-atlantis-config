@@ -616,3 +616,10 @@ func TestWithOriginalDir(t *testing.T) {
 		filepath.Join("..", "test_examples", "with_original_dir"),
 	})
 }
+
+func TestWithOriginalDirThreeLayers(t *testing.T) {
+	runTest(t, filepath.Join("golden", "withOriginalDirThreeLayers.yaml"), []string{
+		"--root",
+		filepath.Join("..", "test_examples", "with_original_dir_three_layers"),
+	})
+}

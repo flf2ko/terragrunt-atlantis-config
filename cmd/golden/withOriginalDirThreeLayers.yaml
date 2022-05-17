@@ -1,0 +1,34 @@
+automerge: false
+parallel_apply: true
+parallel_plan: true
+projects:
+- autoplan:
+    enabled: false
+    when_modified:
+    - '*.hcl'
+    - '*.tf*'
+    - ../terragrunt.hcl
+    - ../common_1/terragrunt.hcl
+    - ../common_2/terragrunt.hcl
+    - ../child_1/terragrunt.hcl
+  dir: child_2
+- autoplan:
+    enabled: false
+    when_modified:
+    - '*.hcl'
+    - '*.tf*'
+    - ../terragrunt.hcl
+    - ../common_1/terragrunt.hcl
+    - ../common_2/terragrunt.hcl
+    - ../child_1/terragrunt.hcl
+    - ../child_2/terragrunt.hcl
+  dir: child_3
+- autoplan:
+    enabled: false
+    when_modified:
+    - '*.hcl'
+    - '*.tf*'
+    - ../terragrunt.hcl
+    - ../common_1/terragrunt.hcl
+  dir: child_1
+version: 3

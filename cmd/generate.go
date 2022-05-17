@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"regexp"
 	"sort"
 
@@ -123,11 +124,14 @@ func sliceUnion(a, b []string) []string {
 }
 
 // Parses the terragrunt config at `path` to find all modules it depends on
-func getDependencies(path string, terragruntOptions *options.TerragruntOptions) ([]string, error) {
+func getDependencies(path string, terragruntOptions *options.TerragruntOptions, printLog bool, rootPath string) ([]string, error) {
 	res, err, _ := requestGroup.Do(path, func() (interface{}, error) {
 		// Check if this path has already been computed
 		cachedResult, ok := getDependenciesCache.get(path)
 		if ok {
+			if cachedResult.err != nil && printLog {
+				log.Errorf("getDependenciesCache.get 1 path: %s, dep: %+v, error: %+v", path, cachedResult.dependencies, cachedResult.err)
+			}
 			return cachedResult.dependencies, cachedResult.err
 		}
 
@@ -136,6 +140,9 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 		isParent, includes, err := parseModule(path, terragruntOptions)
 		if err != nil {
 			getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+			if printLog || path == "/Users/flf2ko/go/src/gitlab.com/cloud-native/terragrunt/m800-prod/hongkong/prod-main-1/lb/cx-services/terragrunt.hcl" {
+				log.Errorf("getDependenciesCache set 1 error: %+v", err)
+			}
 			return nil, err
 		}
 		if isParent && ignoreParentTerragrunt {
@@ -147,6 +154,9 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 		if len(includes) > 0 {
 			for _, includeDep := range includes {
 				getDependenciesCache.set(includeDep.Path, getDependenciesOutput{nil, err})
+				if err != nil && (printLog || includeDep.Path == "/Users/flf2ko/go/src/gitlab.com/cloud-native/terragrunt/m800-prod/hongkong/prod-main-1/lb/cx-services/terragrunt.hcl") {
+					log.Errorf("getDependenciesCache set 1.5 path: %s, error: %+v", path, err)
+				}
 				dependencies = append(dependencies, includeDep.Path)
 			}
 		}
@@ -160,13 +170,19 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 		parsedConfig, err := config.PartialParseConfigFile(path, terragruntOptions, nil, decodeTypes)
 		if err != nil {
 			getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+			if printLog || path == "/Users/flf2ko/go/src/gitlab.com/cloud-native/terragrunt/m800-prod/hongkong/prod-main-1/lb/cx-services/terragrunt.hcl" {
+				log.Errorf("getDependenciesCache set 2 error: %+v", err)
+			}
 			return nil, err
 		}
 
 		// Parse out locals
 		locals, err := parseLocals(path, terragruntOptions, nil)
 		if err != nil {
-			getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+			// getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+			if printLog || path == "/Users/flf2ko/go/src/gitlab.com/cloud-native/terragrunt/m800-prod/hongkong/prod-main-1/lb/cx-services/terragrunt.hcl" {
+				log.Errorf("getDependenciesCache set 3 rootPath: %s, path: %s, error: %+v", rootPath, path, err)
+			}
 			return nil, err
 		}
 
@@ -189,12 +205,18 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 			// Use `go-getter` to normalize the source paths
 			parsedSource, err := getter.Detect(*source, filepath.Dir(path), getter.Detectors)
 			if err != nil {
+				if printLog {
+					log.Errorf("getter.Detect error: %+v", err)
+				}
 				return nil, err
 			}
 
 			// Check if the path begins with a drive letter, denoting Windows
 			isWindowsPath, err := regexp.MatchString(`^[A-Z]:`, parsedSource)
 			if err != nil {
+				if printLog {
+					log.Errorf("regexp.MatchString error: %+v", err)
+				}
 				return nil, err
 			}
 
@@ -207,6 +229,9 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 
 				ls, err := parseTerraformLocalModuleSource(parsedSource)
 				if err != nil {
+					if printLog {
+						log.Errorf("parseTerraformLocalModuleSource error: %+v", err)
+					}
 					return nil, err
 				}
 				sort.Strings(ls)
@@ -261,7 +286,7 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 			depPath := dep
 			terrOpts, _ := options.NewTerragruntOptions(depPath)
 			terrOpts.OriginalTerragruntConfigPath = terragruntOptions.OriginalTerragruntConfigPath
-			childDeps, err := getDependencies(depPath, terrOpts)
+			childDeps, err := getDependencies(depPath, terrOpts, false, rootPath)
 			if err != nil {
 				continue
 			}
@@ -275,6 +300,9 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 					childDepAbsPath, err = filepath.Abs(filepath.Join(depPath, "..", childDep))
 					if err != nil {
 						getDependenciesCache.set(path, getDependenciesOutput{nil, err})
+						if printLog || path == "/Users/flf2ko/go/src/gitlab.com/cloud-native/terragrunt/m800-prod/hongkong/prod-main-1/lb/cx-services/terragrunt.hcl" {
+							log.Errorf("getDependenciesCache set 4 error: %+v", err)
+						}
 						return nil, err
 					}
 				}
@@ -307,6 +335,9 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 		}
 
 		getDependenciesCache.set(path, getDependenciesOutput{cascadedDeps, err})
+		if err != nil && (printLog || path == "/Users/flf2ko/go/src/gitlab.com/cloud-native/terragrunt/m800-prod/hongkong/prod-main-1/lb/cx-services/terragrunt.hcl") {
+			log.Errorf("getDependenciesCache set 5 error: %+v", err)
+		}
 		return cascadedDeps, nil
 	})
 
@@ -321,14 +352,16 @@ func getDependencies(path string, terragruntOptions *options.TerragruntOptions) 
 func createProject(sourcePath string) (*AtlantisProject, error) {
 	options, err := options.NewTerragruntOptions(sourcePath)
 	if err != nil {
+		log.Errorf("NewTerragruntOptions error: %s", err)
 		return nil, err
 	}
 	options.OriginalTerragruntConfigPath = sourcePath
 	options.RunTerragrunt = cli.RunTerragrunt
 	options.Env = getEnvs()
 
-	dependencies, err := getDependencies(sourcePath, options)
+	dependencies, err := getDependencies(sourcePath, options, true, sourcePath)
 	if err != nil {
+		log.Errorf("getDependencies error: %+v", err)
 		return nil, err
 	}
 
@@ -341,6 +374,7 @@ func createProject(sourcePath string) (*AtlantisProject, error) {
 
 	locals, err := parseLocals(sourcePath, options, nil)
 	if err != nil {
+		log.Errorf("parseLocals error: %+v", err)
 		return nil, err
 	}
 
@@ -363,6 +397,7 @@ func createProject(sourcePath string) (*AtlantisProject, error) {
 		}
 		relativePath, err := filepath.Rel(absoluteSourceDir, absolutePath)
 		if err != nil {
+			log.Errorf("filepath.Rel error: %+v", err)
 			return nil, err
 		}
 
@@ -503,7 +538,7 @@ func createHclProject(sourcePaths []string, workingDir string, projectHcl string
 		options.RunTerragrunt = cli.RunTerragrunt
 		options.Env = getEnvs()
 
-		dependencies, err := getDependencies(sourcePath, options)
+		dependencies, err := getDependencies(sourcePath, options, false, sourcePath)
 		if err != nil {
 			return nil, err
 		}
@@ -691,6 +726,7 @@ func main(cmd *cobra.Command, args []string) error {
 		ParallelPlan:  parallel,
 		ParallelApply: parallel,
 	}
+	fmt.Println(config)
 	if oldConfig != nil && preserveWorkflows {
 		config.Workflows = oldConfig.Workflows
 	}
@@ -706,7 +742,7 @@ func main(cmd *cobra.Command, args []string) error {
 	for _, workingDir := range workingDirs {
 		terragruntFiles, err := getAllTerragruntFiles(workingDir)
 		if err != nil {
-			return err
+			return fmt.Errorf("getAllTerragruntFiles err: %+w", err)
 		}
 
 		if len(projectHclDirs) == 0 || createHclProjectChilds || (createHclProjectExternalChilds && workingDir == gitRoot) {
@@ -729,13 +765,14 @@ func main(cmd *cobra.Command, args []string) error {
 				}
 				err := sem.Acquire(ctx, 1)
 				if err != nil {
-					return err
+					return fmt.Errorf("sem.Acquire err: %+w", err)
 				}
 
 				errGroup.Go(func() error {
 					defer sem.Release(1)
 					project, err := createProject(terragruntPath)
 					if err != nil {
+						log.Error("Error when created project for ", terragruntPath)
 						return err
 					}
 					// if project and err are nil then skip this project
@@ -755,7 +792,7 @@ func main(cmd *cobra.Command, args []string) error {
 			}
 
 			if err := errGroup.Wait(); err != nil {
-				return err
+				return fmt.Errorf("errGroup.Wait err: %+w", err)
 			}
 		}
 		if len(projectHclDirs) > 0 && workingDir != gitRoot {
@@ -769,7 +806,7 @@ func main(cmd *cobra.Command, args []string) error {
 				defer sem.Release(1)
 				project, err := createHclProject(terragruntFiles, workingDir, projectHcl)
 				if err != nil {
-					return err
+					return fmt.Errorf("Error when createHclProject for %s, err: %w", terragruntFiles, err)
 				}
 				// if project and err are nil then skip this project
 				if err == nil && project == nil {
