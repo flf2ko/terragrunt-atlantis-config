@@ -18,7 +18,7 @@ clean:
 build: clean
 	CGO_ENABLED=0 \
 	goxc \
-    -bc="darwin,amd64" \
+    -bc="darwin,arm64" \
     -pv=$(VERSION) \
     -d=$(PATH_BUILD) \
     -build-ldflags "-X main.VERSION=$(VERSION)"
